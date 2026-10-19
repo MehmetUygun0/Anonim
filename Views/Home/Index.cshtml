@@ -1,0 +1,361 @@
+@model List<Anonim.Models.FeedItemViewModel>
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Ana Sayfa - Akış";
+    var currentUserId = HttpContextAccessor.HttpContext?.Session.GetInt32("UserId");
+    var feedItems = Model ?? new List<Anonim.Models.FeedItemViewModel>();
+    var totalFeedCount = feedItems.Count;
+}
+
+<div class="container py-3">
+    <!-- Sayfanın Üstünde Kompakt Sayaç / İstatistik Barı -->
+    <div class="row g-3 justify-content-center mb-4">
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="mini-stat-card d-flex align-items-center">
+                <div class="mini-stat-icon bg-primary-subtle text-primary rounded-circle me-3">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold fs-5 text-dark lh-1">@ViewBag.UserCount</div>
+                    <span class="text-muted extra-small text-truncate d-block">Kayıtlı Anonim Kullanıcı</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="mini-stat-card d-flex align-items-center">
+                <div class="mini-stat-icon bg-danger-subtle text-danger rounded-circle me-3">
+                    <i class="bi bi-mask"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold fs-5 text-dark lh-1">@ViewBag.ItirafCount</div>
+                    <span class="text-muted extra-small text-truncate d-block">Paylaşılan Gizli İtiraf</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-12 col-md-4">
+            <div class="mini-stat-card d-flex align-items-center">
+                <div class="mini-stat-icon bg-info-subtle text-info rounded-circle me-3">
+                    <i class="bi bi-book-half"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold fs-5 text-dark lh-1">@ViewBag.HikayeCount</div>
+                    <span class="text-muted extra-small text-truncate d-block">Yazılan Anonim Hikaye</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Akış Ana Taşıyıcı Kolonu -->
+    <div class="feed-container">
+        <!-- Hızlı Paylaşım / Akış Başlatıcı Kartı -->
+        <div class="card feed-composer border-0 p-3 mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="feed-avatar bg-light text-secondary border">
+                    <i class="bi bi-incognito fs-5"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="text-muted small fw-medium">Kimliğini gizle, aklındakileri özgürce paylaş...</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-controller="Itiraf" asp-action="Create" class="btn btn-sm btn-primary rounded-pill px-3 py-2 shadow-sm d-flex align-items-center gap-1">
+                        <i class="bi bi-mask"></i>
+                        <span class="d-none d-sm-inline">İtiraf Paylaş</span>
+                    </a>
+                    <a asp-controller="Hikaye" asp-action="Create" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-2 d-flex align-items-center gap-1">
+                        <i class="bi bi-pencil-square"></i>
+                        <span class="d-none d-sm-inline">Hikaye Yaz</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Akış Sekmeleri & Filtreleme -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <ul class="nav feed-nav-pills gap-2" id="feedFilterTabs">
+                <li class="nav-item">
+                    <button type="button" class="nav-link active" data-filter="all">
+                        <i class="bi bi-grid-fill me-1"></i> Tüm Akış
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link" data-filter="itiraf">
+                        <i class="bi bi-mask me-1 text-danger"></i> Gizli İtiraflar
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link" data-filter="hikaye">
+                        <i class="bi bi-book-half me-1 text-primary"></i> Anonim Hikayeler
+                    </button>
+                </li>
+            </ul>
+
+            <div class="text-muted extra-small">
+                <i class="bi bi-activity text-success me-1"></i> Canlı Topluluk Akışı
+            </div>
+        </div>
+
+        <!-- Akış Gönderi Listesi -->
+        @if (feedItems.Count == 0)
+        {
+            <div class="card border-0 rounded-4 shadow-sm p-5 text-center my-4">
+                <div class="mb-3">
+                    <i class="bi bi-chat-square-quote text-muted" style="font-size: 3rem;"></i>
+                </div>
+                <h5 class="fw-bold text-dark">Akış Henüz Boş</h5>
+                <p class="text-muted small mb-4">Toplulukta henüz bir itiraf veya hikaye paylaşılmadı. İlk gönderiyi sen paylaş!</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a asp-controller="Itiraf" asp-action="Create" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-mask me-1"></i> İtiraf Yap
+                    </a>
+                    <a asp-controller="Hikaye" asp-action="Create" class="btn btn-outline-dark rounded-pill px-4">
+                        <i class="bi bi-pencil-square me-1"></i> Hikaye Yaz
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-4" id="feedStream">
+                @foreach (var item in feedItems)
+                {
+                    var isItiraf = item.Type == Anonim.Models.FeedType.Itiraf;
+                    var typeKey = isItiraf ? "itiraf" : "hikaye";
+                    var isOwner = currentUserId != null && item.UserId == currentUserId;
+
+                    <article class="card feed-post-card border-0 p-4" data-post-type="@typeKey" data-post-id="@item.Id">
+                        <!-- Üst Bilgi: Yazar, Tür ve Tarih -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="feed-avatar @(isItiraf ? "feed-avatar-itiraf" : "feed-avatar-hikaye")">
+                                    <i class="bi @(isItiraf ? "bi-mask" : "bi-feather")"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold text-dark small">@item.AuthorNickName</span>
+                                        @if (isItiraf)
+                                        {
+                                            <span class="badge rounded-pill bg-danger-subtle text-danger border border-danger-subtle extra-small">
+                                                <i class="bi bi-mask me-1"></i>İtiraf
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle extra-small">
+                                                <i class="bi bi-book-half me-1"></i>Hikaye
+                                            </span>
+                                        }
+                                    </div>
+                                    <span class="text-muted extra-small">
+                                        <i class="bi bi-clock me-1"></i>@item.CreatedAt.ToString("dd MMM yyyy, HH:mm")
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if (isOwner)
+                            {
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light border-0 rounded-circle text-muted" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Seçenekler">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3">
+                                        <li>
+                                            <form asp-controller="@(isItiraf ? "Itiraf" : "Hikaye")" asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Bu gönderiyi silmek istediğine emin misin?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="dropdown-item text-danger py-2 extra-small">
+                                                    <i class="bi bi-trash-fill me-2"></i>Gönderiyi Sil
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Gönderi Başlığı ve Metni -->
+                        <h5 class="fw-bold text-dark mb-2">@item.Title</h5>
+                        <p class="feed-content-text mb-3">@item.Text</p>
+
+                        <!-- Alt Aksiyon Barı (Beğen, Paylaş, Detay) -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-auto">
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="feed-action-btn like-btn @(item.IsLikedByCurrentUser ? "liked" : "")"
+                                        data-type="@typeKey" data-id="@item.Id" title="Beğen">
+                                    <i class="bi @(item.IsLikedByCurrentUser ? "bi-heart-fill text-danger" : "bi-heart") fs-6"></i>
+                                    <span class="like-count">@item.LikeCount</span>
+                                </button>
+                                <button type="button" class="feed-action-btn share-btn" data-title="@item.Title" title="Paylaş">
+                                    <i class="bi bi-share fs-6"></i>
+                                    <span>Paylaş</span>
+                                </button>
+                            </div>
+
+                            <div>
+                                @if (isItiraf)
+                                {
+                                    <a asp-controller="Itiraf" asp-action="Index" class="btn btn-link btn-sm text-decoration-none text-muted extra-small p-0">
+                                        İtiraflara Göz At <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Hikaye" asp-action="Index" class="btn btn-link btn-sm text-decoration-none text-muted extra-small p-0">
+                                        Hikayelere Göz At <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Bildirim Toast'ı -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="feedToast" class="toast align-items-center text-bg-dark border-0 rounded-4 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2">
+                <i id="feedToastIcon" class="bi bi-check-circle-fill text-success"></i>
+                <span id="feedToastMsg">İşlem başarılı!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Kapat"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Toast Yardımcısı
+            const toastEl = document.getElementById("feedToast");
+            const toastMsgEl = document.getElementById("feedToastMsg");
+            const toastIconEl = document.getElementById("feedToastIcon");
+            let toast;
+            if (toastEl && typeof bootstrap !== "undefined") {
+                toast = new bootstrap.Toast(toastEl, { delay: 2800 });
+            }
+
+            function showToast(msg, isSuccess = true) {
+                if (toastMsgEl && toastIconEl && toast) {
+                    toastMsgEl.textContent = msg;
+                    if (isSuccess) {
+                        toastIconEl.className = "bi bi-check-circle-fill text-success";
+                    } else {
+                        toastIconEl.className = "bi bi-exclamation-circle-fill text-warning";
+                    }
+                    toast.show();
+                } else {
+                    alert(msg);
+                }
+            }
+
+            // 1. Sekme Filtreleme (Tümü, İtiraf, Hikaye)
+            const filterTabs = document.querySelectorAll("#feedFilterTabs [data-filter]");
+            const posts = document.querySelectorAll("#feedStream article[data-post-type]");
+
+            filterTabs.forEach(tab => {
+                tab.addEventListener("click", function () {
+                    filterTabs.forEach(t => t.classList.remove("active"));
+                    this.classList.add("active");
+
+                    const filter = this.getAttribute("data-filter");
+
+                    posts.forEach(post => {
+                        const postType = post.getAttribute("data-post-type");
+                        if (filter === "all" || filter === postType) {
+                            post.style.display = "";
+                        } else {
+                            post.style.display = "none";
+                        }
+                    });
+                });
+            });
+
+            // 2. Beğeni (Like) Butonu - Backend Model Tabanlı
+            const likeButtons = document.querySelectorAll(".like-btn");
+            likeButtons.forEach(btn => {
+                btn.addEventListener("click", async function () {
+                    const postType = btn.getAttribute("data-type"); // "itiraf" veya "hikaye"
+                    const postId = btn.getAttribute("data-id");
+                    const heartIcon = btn.querySelector("i");
+                    const countSpan = btn.querySelector(".like-count");
+
+                    const controllerName = postType === "itiraf" ? "Itiraf" : "Hikaye";
+                    const endpoint = `/${controllerName}/ToggleLike/${postId}`;
+
+                    btn.disabled = true;
+
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: "POST",
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success) {
+                                countSpan.textContent = data.count;
+                                if (data.liked) {
+                                    btn.classList.add("liked");
+                                    heartIcon.className = "bi bi-heart-fill text-danger fs-6";
+                                } else {
+                                    btn.classList.remove("liked");
+                                    heartIcon.className = "bi bi-heart fs-6";
+                                }
+                            } else {
+                                showToast(data.message || "Beğenmek için lütfen giriş yapın.", false);
+                                if (data.requireLogin) {
+                                    setTimeout(() => {
+                                        window.location.href = "/User/Login";
+                                    }, 1200);
+                                }
+                            }
+                        } else {
+                            showToast("İşlem gerçekleştirilemedi.", false);
+                        }
+                    } catch (error) {
+                        console.error("Beğeni hatası:", error);
+                        showToast("Bir bağlantı hatası oluştu.", false);
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+            });
+
+            // 3. Paylaş (Share) Butonu
+            const shareButtons = document.querySelectorAll(".share-btn");
+            shareButtons.forEach(btn => {
+                btn.addEventListener("click", async function () {
+                    const postTitle = btn.getAttribute("data-title") || "Anonim Paylaşım";
+                    const pageUrl = window.location.href;
+
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: postTitle,
+                                text: postTitle + " - Anonim'de paylaşıldı.",
+                                url: pageUrl
+                            });
+                            return;
+                        } catch (err) {
+                            // Kullanıcı paylaşımı iptal ettiğinde sessiz kal
+                        }
+                    }
+
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(pageUrl).then(() => {
+                            showToast("Bağlantı panoya kopyalandı!", true);
+                        }).catch(() => {
+                            showToast("Bağlantı kopyalanamadı.", false);
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

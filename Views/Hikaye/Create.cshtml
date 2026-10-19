@@ -1,0 +1,43 @@
+@model Anonim.Models.Hikayeler
+@{
+    ViewData["Title"] = "Yeni Hikaye Yaz";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-lg border-0 rounded-4 glass-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="mb-4">
+                    <a asp-action="Index" class="text-decoration-none text-muted small mb-2 d-inline-block">
+                        <i class="bi bi-arrow-left me-1"></i> Hikayelere Geri Dön
+                    </a>
+                    <h2 class="fw-bold text-gradient">Hikayeni Kaleme Al</h2>
+                    <p class="text-muted small">İlham verici, düşündürücü veya komik bir hikaye yazıp anonim dünyayla paylaş.</p>
+                </div>
+
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-semibold">Hikaye Başlığı</label>
+                        <input asp-for="Title" class="form-control bg-light border-0 py-2 rounded-3" placeholder="Örn: Yağmurlu Bir İstanbul Akşamı..." required />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Text" class="form-label fw-semibold">Hikayen</label>
+                        <textarea asp-for="Text" class="form-control bg-light border-0 py-2 rounded-3" rows="8" placeholder="Öykünü detaylarıyla anlat..." required></textarea>
+                        <span asp-validation-for="Text" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1 py-2 rounded-3 fw-bold shadow-sm">
+                            <i class="bi bi-feather me-1"></i> Hikayeyi Yayınla
+                        </button>
+                        <a asp-action="Index" class="btn btn-light py-2 rounded-3">İptal</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
